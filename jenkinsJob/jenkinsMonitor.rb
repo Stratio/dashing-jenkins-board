@@ -7,7 +7,7 @@ require 'jsonpath'
 
 		jobsList = Array.new
 
-		endpointURL = "http://jenkins.stratio.com/api/json?tree=jobs[name,jobs[name,builds[fullDisplayName,result,description,timestamp,duration]]]"
+		endpointURL = "http://jenkins.stratio.com/api/json?tree=jobs[name,jobs[name,builds[fullDisplayName,result,description,timestamp,duration],jobs[name,builds[fullDisplayName,result,description,timestamp,duration]]]]"
 		
 		return JSON.parse(HTTParty.get(endpointURL).body)		
 
@@ -25,10 +25,10 @@ require 'jsonpath'
 
 	def GetRunningJobsList(fList)
  
-		jsonPathRegexp = JsonPath.new('$.jobs[*].jobs[*].builds[?(@.result==nil)].fullDisplayName')
+		jsonPathRegexp = JsonPath.new('..builds[?(@.result==nil)].fullDisplayName')
 		jobsDisplayNameArray = jsonPathRegexp.on(fList)		
 
-		jsonPathRegexp = JsonPath.new('$.jobs[*].jobs[*].builds[?(@.result==nil)].timestamp')
+		jsonPathRegexp = JsonPath.new('..builds[?(@.result==nil)].timestamp')
 		jobsTimestampArray = jsonPathRegexp.on(fList)		
 			
 		theArray = Array.new
@@ -82,27 +82,27 @@ require 'jsonpath'
 	def GetCompletedJobsList(fList)
  		
 		statusArray = Array.new
-		jsonPathRegexp = JsonPath.new('$.jobs[*].jobs[*].builds[?(@.result=="SUCCESS")].fullDisplayName')
+		jsonPathRegexp = JsonPath.new('..builds[?(@.result=="SUCCESS")].fullDisplayName')
 		jobsDisplayNameArray = jsonPathRegexp.on(fList)		
 
 		firstArrayl = jobsDisplayNameArray.length
 
-		jsonPathRegexp = JsonPath.new('$.jobs[*].jobs[*].builds[?(@.result=="SUCCESS")].duration')
+		jsonPathRegexp = JsonPath.new('..builds[?(@.result=="SUCCESS")].duration')
 		jobsDurationArray = jsonPathRegexp.on(fList)
 
-		jsonPathRegexp = JsonPath.new('$.jobs[*].jobs[*].builds[?(@.result=="SUCCESS")].timestamp')
+		jsonPathRegexp = JsonPath.new('..builds[?(@.result=="SUCCESS")].timestamp')
 		jobsTimestampArray = jsonPathRegexp.on(fList)
 
 		statusArray.fill("green", 0..firstArrayl)
 
-		jsonPathRegexp = JsonPath.new('$.jobs[*].jobs[*].builds[?(@.result=="FAILURE")].fullDisplayName')
+		jsonPathRegexp = JsonPath.new('..builds[?(@.result=="FAILURE")].fullDisplayName')
 		jobsDisplayNameArray.push(jsonPathRegexp.on(fList))		
 
-		jsonPathRegexp = JsonPath.new('$.jobs[*].jobs[*].builds[?(@.result=="FAILURE")].duration')
+		jsonPathRegexp = JsonPath.new('..builds[?(@.result=="FAILURE")].duration')
 		jobsDurationArray.concat(jsonPathRegexp.on(fList))
 
 
-		jsonPathRegexp = JsonPath.new('$.jobs[*].jobs[*].builds[?(@.result=="FAILURE")].timestamp')
+		jsonPathRegexp = JsonPath.new('..builds[?(@.result=="FAILURE")].timestamp')
 		jobsTimestampArray.concat(jsonPathRegexp.on(fList))
 		
 		statusArray.fill("red", firstArrayl+1..jobsDisplayNameArray.length)
@@ -128,14 +128,14 @@ interval = "10s"
 
 SCHEDULER.every interval, :first_in => 0 do 
 
-		fullList = GetFullJobsList()
+	fullList = GetFullJobsList()
     	jCurrentWorkers = GetRunningWorkers()  		
     	jExecutingJobsList = GetRunningJobsList(fullList)    
     	jFinishedJobsList = GetCompletedJobsList(fullList)	
     	jRunningContainers = GetRunningContainers()
 
-		send_event('jenkinsCurrentDockerContainers', { value: jRunningContainers })
-		send_event('jenkinsCurrentWorkers', { value: jCurrentWorkers })		
-		send_event('jenkinsCurrentJobsList', { items: jExecutingJobsList })		
-		send_event('jenkinsCompletedJobsList', { items: jFinishedJobsList })
+	send_event('jenkinsCurrentDockerContainers', { value: jRunningContainers })
+	send_event('jenkinsCurrentWorkers', { value: jCurrentWorkers })		
+	send_event('jenkinsCurrentJobsList', { items: jExecutingJobsList })		
+	send_event('jenkinsCompletedJobsList', { items: jFinishedJobsList })
 end
