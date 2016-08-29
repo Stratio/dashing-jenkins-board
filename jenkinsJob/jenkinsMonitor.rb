@@ -7,8 +7,7 @@ require 'jsonpath'
 
 		jobsList = Array.new
 
-		endpointURL = "http://jenkins.stratio.com/api/json?tree=jobs[name,jobs[name,builds[fullDisplayName,result,description,timestamp,duration],jobs[name,builds[fullDisplayName,result,description,timestamp,duration]]]]"
-		
+		endpointURL = "http://jenkins.stratio.com/api/json?tree=jobs[name,jobs[name,builds[fullDisplayName,result,description,timestamp,duration],jobs[name,builds[fullDisplayName,result,description,timestamp,duration]]]]"		
 		return JSON.parse(HTTParty.get(endpointURL).body)		
 
 	end
@@ -30,19 +29,26 @@ require 'jsonpath'
 
 		jsonPathRegexp = JsonPath.new('..builds[?(@.result==nil)].timestamp')
 		jobsTimestampArray = jsonPathRegexp.on(fList)		
-			
+	
+		jsonPathRegexp = JsonPath.new('..builds[?(@.result==nil)].description')
+		jobsBranchArray = jsonPathRegexp.on(fList) 
+		
 		theArray = Array.new
 		statusArray = Array.new(jobsTimestampArray.length)
 
 		statusArray.fill("grey")
-		theArray = BuildOrderedJobsArray(jobsDisplayNameArray,jobsTimestampArray, statusArray, nil)		
+		theArray = BuildOrderedJobsArray(jobsDisplayNameArray,jobsTimestampArray, statusArray, nil, jobsBranchArray)		
 		
-		puts "Running jobs" + theArray.length.to_s
+		#puts "Running jobs " + theArray.length.to_s
 
-		return theArray.slice(0..9)															
+		returnHash = Hash.new
+		returnHash['count'] = 0
+		returnHash['count'] = theArray.length.to_s if (theArray.length - 10) > 0
+		returnHash['items'] = theArray.slice(0..9)
+		return returnHash													
 	end
 
-	def BuildOrderedJobsArray(nameList,posixList, statusList, durationList)
+	def BuildOrderedJobsArray(nameList,posixList, statusList, durationList, branchList)
 
 		orderingArray = Array.new 			
 
@@ -54,6 +60,7 @@ require 'jsonpath'
 				orderingHash['label'] = nameList[i]							
 				orderingHash['posix'] = posixList[i]
 				orderingHash['status'] = statusList[i]
+				orderingHash['branch'] = branchList[i].to_s.gsub(/Squashing /, '').gsub(/<.*?>/, '')
 				
 				if statusList[i]=="grey"
 
@@ -93,34 +100,44 @@ require 'jsonpath'
 		jsonPathRegexp = JsonPath.new('..builds[?(@.result=="SUCCESS")].timestamp')
 		jobsTimestampArray = jsonPathRegexp.on(fList)
 
+		jsonPathRegexp = JsonPath.new('..builds[?(@.result=="SUCCESS")].description')
+		jobsBranchArray = jsonPathRegexp.on(fList)
+
 		statusArray.fill("green", 0..firstArrayl)
 
 		jsonPathRegexp = JsonPath.new('..builds[?(@.result=="FAILURE")].fullDisplayName')
-		jobsDisplayNameArray.push(jsonPathRegexp.on(fList))		
+		jobsDisplayNameArray.concat(jsonPathRegexp.on(fList))		
 
 		jsonPathRegexp = JsonPath.new('..builds[?(@.result=="FAILURE")].duration')
 		jobsDurationArray.concat(jsonPathRegexp.on(fList))
 
-
 		jsonPathRegexp = JsonPath.new('..builds[?(@.result=="FAILURE")].timestamp')
 		jobsTimestampArray.concat(jsonPathRegexp.on(fList))
 		
+		jsonPathRegexp = JsonPath.new('..builds[?(@.result=="FAILURE")].description')
+                jobsBranchArray.concat(jsonPathRegexp.on(fList))
+
 		statusArray.fill("red", firstArrayl+1..jobsDisplayNameArray.length)
 
 		theArray = Array.new	
-		theArray = BuildOrderedJobsArray(jobsDisplayNameArray,jobsTimestampArray, statusArray, jobsDurationArray)		
+		theArray = BuildOrderedJobsArray(jobsDisplayNameArray,jobsTimestampArray, statusArray, jobsDurationArray, jobsBranchArray)
 
-		puts "Completed: " +theArray.length.to_s
+		#puts "Completed: " + jobsDisplayNameArray.length.to_s
 
-		return theArray.slice(0..9)											
+		returnHash = Hash.new
+                returnHash['count'] = 0
+                returnHash['count'] = theArray.length.to_s if (theArray.length - 10) > 0
+                returnHash['items'] = theArray.slice(0..9)
+                return returnHash
 		
 	end
 
 	def GetRunningContainers()
-		endpointURL = "http://jenkins.stratio.com:22375/containers/json"
+		endpointURL = "http://jenkins.stratio.com:22375/info"
+		jsonPathRegexp = JsonPath.new('$.ContainersRunning')
 		response = JSON.parse(HTTParty.get(endpointURL).body)
 
-		return response.count
+		return jsonPathRegexp.on(response)
 
 	end
 
@@ -135,7 +152,8 @@ SCHEDULER.every interval, :first_in => 0 do
     	jRunningContainers = GetRunningContainers()
 
 	send_event('jenkinsCurrentDockerContainers', { value: jRunningContainers })
-	send_event('jenkinsCurrentWorkers', { value: jCurrentWorkers })		
-	send_event('jenkinsCurrentJobsList', { items: jExecutingJobsList })		
-	send_event('jenkinsCompletedJobsList', { items: jFinishedJobsList })
+	send_event('jenkinsCurrentWorkers', { value: jCurrentWorkers })
+
+	send_event('jenkinsCurrentJobsList', { items: jExecutingJobsList['items'], count: jExecutingJobsList['count'] })		
+	send_event('jenkinsCompletedJobsList', { items: jFinishedJobsList['items'], count: jFinishedJobsList['count'] })
 end
