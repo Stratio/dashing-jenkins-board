@@ -139,7 +139,7 @@ require 'jsonpath'
 
 		response = jsonPathRegexp.on(HTTParty.get(endpointURL).body)
 			
-		return response.select { |x| x !~ /weave/ }.length
+		return response.length
 
 	end
 
