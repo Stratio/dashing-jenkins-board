@@ -39,7 +39,7 @@ require 'jsonpath'
 		statusArray.fill("grey")
 		theArray = BuildOrderedJobsArray(jobsDisplayNameArray,jobsTimestampArray, statusArray, nil, jobsBranchArray)		
 		
-		#puts "Running jobs " + theArray.length.to_s
+		#p theArray
 
 		returnHash = Hash.new
 		returnHash['count'] = 0
@@ -133,11 +133,13 @@ require 'jsonpath'
 	end
 
 	def GetRunningContainers()
-		endpointURL = "http://jenkins.stratio.com:22375/info"
-		jsonPathRegexp = JsonPath.new('$.ContainersRunning')
-		response = JSON.parse(HTTParty.get(endpointURL).body)
 
-		return jsonPathRegexp.on(response)
+		endpointURL = "http://jenkins.stratio.com:22375/containers/json"
+                jsonPathRegexp = JsonPath.new('$.[*].Names[0]')
+
+		response = jsonPathRegexp.on(HTTParty.get(endpointURL).body)
+			
+		return response.select { |x| x !~ /weave/ }.length
 
 	end
 
