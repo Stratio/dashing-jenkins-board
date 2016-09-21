@@ -7,13 +7,13 @@ require 'jsonpath'
 
 		jobsList = Array.new
 
-		endpointURL = "http://jenkins.stratio.com/api/json?tree=jobs[name,jobs[name,builds[fullDisplayName,result,description,timestamp,duration],jobs[name,builds[fullDisplayName,result,description,timestamp,duration]]]]"		
+		endpointURL = "http://jenkins.stratio.com:8080/api/json?tree=jobs[name,jobs[name,builds[fullDisplayName,result,description,timestamp,duration],jobs[name,builds[fullDisplayName,result,description,timestamp,duration]]]]"
 		return JSON.parse(HTTParty.get(endpointURL).body)		
 
 	end
     
 	def GetRunningWorkers()
-		endpointURL = "http://jenkins.stratio.com/computer/api/json?tree=computer"
+		endpointURL = "http://jenkins.stratio.com:8080/computer/api/json?tree=computer"
 		response = JSON.parse(HTTParty.get(endpointURL).body)
 
 		jsonPathRegexp = JsonPath.new("$.computer[*]._class")
@@ -42,9 +42,9 @@ require 'jsonpath'
 		#p theArray
 
 		returnHash = Hash.new
-		returnHash['count'] = 0
-		returnHash['count'] = theArray.length.to_s if (theArray.length - 10) > 0
-		returnHash['items'] = theArray.slice(0..9)
+		returnHash['count'] = ''
+		returnHash['count'] = '+ ' + (theArray.length - 6).to_s if (theArray.length - 6) > 0
+		returnHash['items'] = theArray.slice(0..5)
 		return returnHash													
 	end
 
@@ -60,7 +60,7 @@ require 'jsonpath'
 				orderingHash['label'] = nameList[i]							
 				orderingHash['posix'] = posixList[i]
 				orderingHash['status'] = statusList[i]
-				orderingHash['branch'] = branchList[i].to_s.gsub(/Squashing /, '').gsub(/<.*?>/, '')
+				orderingHash['branch'] = branchList[i].to_s.gsub(/Squashing /, '').gsub(/<.*?>/, '') if !branchList[i].to_s.include? "["
 				
 				if statusList[i]=="grey"
 
@@ -125,8 +125,8 @@ require 'jsonpath'
 		#puts "Completed: " + jobsDisplayNameArray.length.to_s
 
 		returnHash = Hash.new
-                returnHash['count'] = 0
-                returnHash['count'] = theArray.length.to_s if (theArray.length - 10) > 0
+                returnHash['count'] = ''
+                returnHash['count'] = '+ ' + (theArray.length - 10).to_s if (theArray.length - 10) > 0
                 returnHash['items'] = theArray.slice(0..9)
                 return returnHash
 		
@@ -143,7 +143,7 @@ require 'jsonpath'
 
 	end
 
-interval = "10s"	
+interval = "15s"	
 
 SCHEDULER.every interval, :first_in => 0 do 
 
@@ -153,8 +153,8 @@ SCHEDULER.every interval, :first_in => 0 do
     	jFinishedJobsList = GetCompletedJobsList(fullList)	
     	jRunningContainers = GetRunningContainers()
 
-	send_event('jenkinsCurrentDockerContainers', { value: jRunningContainers })
-	send_event('jenkinsCurrentWorkers', { value: jCurrentWorkers })
+	send_event('jenkinsCurrentDockerContainers', { current: jRunningContainers })
+	send_event('jenkinsCurrentWorkers', { current: jCurrentWorkers })
 
 	send_event('jenkinsCurrentJobsList', { items: jExecutingJobsList['items'], count: jExecutingJobsList['count'] })		
 	send_event('jenkinsCompletedJobsList', { items: jFinishedJobsList['items'], count: jFinishedJobsList['count'] })

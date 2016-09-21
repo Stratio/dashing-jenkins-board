@@ -1,27 +1,27 @@
 <script type='text/javascript'>
 $(function() {
 
-   Dashing.gridsterLayout('[{"col":5,"row":1,"size_x":1,"size_y":1},{"col":5,"row":2,"size_x":1,"size_y":1},{"col":1,"row":1,"size_x":2,"size_y":2},{"col":3,"row":1,"size_x":2,"size_y":2}]')
+   Dashing.gridsterLayout('[{"col":1,"row":8,"size_x":1,"size_y":3},{"col":2,"row":8,"size_x":1,"size_y":3},{"col":1,"row":1,"size_x":2,"size_y":7},{"col":3,"row":1,"size_x":2,"size_y":10}]')
 
-  Dashing.widget_base_dimensions = [262, 365]
-  Dashing.numColumns = 5
+  Dashing.widget_base_dimensions = [320, 66]
+  Dashing.numColumns = 4 
 });
 </script>
 <% content_for :title do %>Jenkins Jobs<% end %>
 
 <div class="gridster">
 	<ul>
-	<li data-row="1" data-col="5" data-sizex="1" data-sizey="1"> 
-		<div data-id="jenkinsCurrentDockerContainers" data-view="Meter" data-title="Running Containers" data-min="0" data-max="50" style="background-color:#FF4300"></div>
+	<li data-row="9" data-col="1" data-sizex="1" data-sizey="3"> 
+<div data-id="jenkinsCurrentDockerContainers" data-view="Number" data-title="Containers" data-min="0" data-max="50" style="background-color:#17466c"></div>
 	</li>	
-	<li data-row="2" data-col="5" data-sizex="1" data-sizey="1"> 	
-		<div data-id="jenkinsCurrentWorkers" data-view="Meter" data-title="Jenkins Agents" data-min="0" data-max="20" style="background-color:#3E94D1"></div>
+	<li data-row="9" data-col="2" data-sizex="1" data-sizey="3"> 	
+		<div data-id="jenkinsCurrentWorkers" data-view="Number" data-title="Agents" data-min="0" data-max="20" style="background-color:#172734"></div>
 	</li>		
-	<li data-row="1" data-col="1" data-sizex="2" data-sizey="2">
-	  	<div data-id="jenkinsCurrentJobsList" data-view="List" data-unordered="false" data-title="Jobs in Progress" style="background-color:#006400"></div>
+	<li data-row="1" data-col="1" data-sizex="2" data-sizey="7">
+	  	<div data-id="jenkinsCurrentJobsList" data-view="Jenkinslist" class="progress" data-title="Jobs in Progress" style="color:black;"></div>
 	</li>
-	<li data-row="1" data-col="3" data-sizex="2" data-sizey="2">
-	 	<div data-id="jenkinsCompletedJobsList" data-view="List" data-unordered="false" data-title="Jobs Completed" style="background-color:#932872 "></div>
+	<li data-row="1" data-col="3" data-sizex="2" data-sizey="10">
+	 	<div data-id="jenkinsCompletedJobsList" data-view="Jenkinslist" class="completed" data-title="Jobs Completed" style="color:black;"></div>
 	</li>
 	</ul> 
 </div>
