@@ -24,13 +24,13 @@ require 'jsonpath'
 
 	def GetRunningJobsList(fList)
  
-		jsonPathRegexp = JsonPath.new('..builds[?(@.result==nil)].fullDisplayName')
+		jsonPathRegexp = JsonPath.new('..builds[?(@.result==nil || @_current_node["duration"]==0)].fullDisplayName')
 		jobsDisplayNameArray = jsonPathRegexp.on(fList)		
 
-		jsonPathRegexp = JsonPath.new('..builds[?(@.result==nil)].timestamp')
+		jsonPathRegexp = JsonPath.new('..builds[?(@.result==nil || @_current_node["duration"]==0)].timestamp')
 		jobsTimestampArray = jsonPathRegexp.on(fList)		
 	
-		jsonPathRegexp = JsonPath.new('..builds[?(@.result==nil)].description')
+		jsonPathRegexp = JsonPath.new('..builds[?(@.result==nil || @_current_node["duration"]==0)].description')
 		jobsBranchArray = jsonPathRegexp.on(fList) 
 		
 		theArray = Array.new
@@ -143,7 +143,7 @@ require 'jsonpath'
 
 	end
 
-interval = "15s"	
+interval = "30s"	
 
 SCHEDULER.every interval, :first_in => 0 do 
 
@@ -153,7 +153,7 @@ SCHEDULER.every interval, :first_in => 0 do
     	jFinishedJobsList = GetCompletedJobsList(fullList)	
     	jRunningContainers = GetRunningContainers()
 
-	send_event('jenkinsCurrentDockerContainers', { current: jRunningContainers })
+	send_event('jenkinsCurrentDockerContainers', { current: (jRunningContainers - 8) })
 	send_event('jenkinsCurrentWorkers', { current: jCurrentWorkers })
 
 	send_event('jenkinsCurrentJobsList', { items: jExecutingJobsList['items'], count: jExecutingJobsList['count'] })		

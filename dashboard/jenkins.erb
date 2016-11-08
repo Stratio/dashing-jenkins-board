@@ -20,8 +20,12 @@ $(function() {
 	<li data-row="1" data-col="1" data-sizex="2" data-sizey="7">
 	  	<div data-id="jenkinsCurrentJobsList" data-view="Jenkinslist" class="progress" data-title="Jobs in Progress" style="color:black;"></div>
 	</li>
-	<li data-row="1" data-col="3" data-sizex="2" data-sizey="10">
-	 	<div data-id="jenkinsCompletedJobsList" data-view="Jenkinslist" class="completed" data-title="Jobs Completed" style="color:black;"></div>
+
+
+	<li data-switcher-interval="120000" data-row="1" data-col="3" data-sizex="2" data-sizey="2" style="overflow: hidden; height: 748px">
+                <div data-id="jenkinsCompletedJobsList" data-view="Jenkinslist" class="completed" data-title="Jobs Completed" style="color:black;"></div>
+		<div data-id="iframeId1" data-view="Iframe" data-url="https://p.datadoghq.com/sb/fd2a19d0a-c786266355" style="height:9000px"></div>
 	</li>
+
 	</ul> 
 </div>
