@@ -7,7 +7,7 @@ require 'jsonpath'
 
 		jobsList = Array.new
 
-		endpointURL = "http://jenkins.stratio.com:8080/api/json?tree=jobs[name,jobs[name,builds[fullDisplayName,result,description,timestamp,duration],jobs[name,builds[fullDisplayName,result,description,timestamp,duration]]]]"
+		endpointURL = "http://jenkins.stratio.com:8080/api/json?tree=jobs[name,jobs[name,builds[fullDisplayName,result,timestamp,duration],jobs[name,builds[fullDisplayName,result,timestamp,duration]]]]"
 		return JSON.parse(HTTParty.get(endpointURL).body)		
 
 	end
@@ -30,14 +30,11 @@ require 'jsonpath'
 		jsonPathRegexp = JsonPath.new('..builds[?(@.result==nil || @_current_node["duration"]==0)].timestamp')
 		jobsTimestampArray = jsonPathRegexp.on(fList)		
 	
-		jsonPathRegexp = JsonPath.new('..builds[?(@.result==nil || @_current_node["duration"]==0)].description')
-		jobsBranchArray = jsonPathRegexp.on(fList) 
-		
 		theArray = Array.new
 		statusArray = Array.new(jobsTimestampArray.length)
 
 		statusArray.fill("grey")
-		theArray = BuildOrderedJobsArray(jobsDisplayNameArray,jobsTimestampArray, statusArray, nil, jobsBranchArray)		
+		theArray = BuildOrderedJobsArray(jobsDisplayNameArray,jobsTimestampArray, statusArray, nil)		
 		
 		#p theArray
 
@@ -48,7 +45,7 @@ require 'jsonpath'
 		return returnHash													
 	end
 
-	def BuildOrderedJobsArray(nameList,posixList, statusList, durationList, branchList)
+	def BuildOrderedJobsArray(nameList,posixList, statusList, durationList)
 
 		orderingArray = Array.new 			
 
@@ -60,7 +57,6 @@ require 'jsonpath'
 				orderingHash['label'] = nameList[i].split(' » ')[-2]
 				orderingHash['posix'] = posixList[i]
 				orderingHash['status'] = statusList[i]
-				#orderingHash['branch'] = branchList[i].to_s.gsub(/Squashing /, '').gsub(/<.*?>/, '') if !branchList[i].to_s.include? "["
                                 orderingHash['branch'] = nameList[i].split(' » ')[-1]
 				
 				if statusList[i]=="grey"
@@ -101,9 +97,6 @@ require 'jsonpath'
 		jsonPathRegexp = JsonPath.new('..builds[?(@.result=="SUCCESS")].timestamp')
 		jobsTimestampArray = jsonPathRegexp.on(fList)
 
-		jsonPathRegexp = JsonPath.new('..builds[?(@.result=="SUCCESS")].description')
-		jobsBranchArray = jsonPathRegexp.on(fList)
-
 		statusArray.fill("green", 0..firstArrayl)
 
 		jsonPathRegexp = JsonPath.new('..builds[?(@.result=="FAILURE")].fullDisplayName')
@@ -115,13 +108,10 @@ require 'jsonpath'
 		jsonPathRegexp = JsonPath.new('..builds[?(@.result=="FAILURE")].timestamp')
 		jobsTimestampArray.concat(jsonPathRegexp.on(fList))
 		
-		jsonPathRegexp = JsonPath.new('..builds[?(@.result=="FAILURE")].description')
-                jobsBranchArray.concat(jsonPathRegexp.on(fList))
-
 		statusArray.fill("red", firstArrayl+1..jobsDisplayNameArray.length)
 
 		theArray = Array.new	
-		theArray = BuildOrderedJobsArray(jobsDisplayNameArray,jobsTimestampArray, statusArray, jobsDurationArray, jobsBranchArray)
+		theArray = BuildOrderedJobsArray(jobsDisplayNameArray,jobsTimestampArray, statusArray, jobsDurationArray)
 
 		#puts "Completed: " + jobsDisplayNameArray.length.to_s
 
