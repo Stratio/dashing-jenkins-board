@@ -57,10 +57,11 @@ require 'jsonpath'
 
 			if (nameList[i] != nil)
 				
-				orderingHash['label'] = nameList[i]							
+				orderingHash['label'] = nameList[i].split(' » ')[-2]
 				orderingHash['posix'] = posixList[i]
 				orderingHash['status'] = statusList[i]
-				orderingHash['branch'] = branchList[i].to_s.gsub(/Squashing /, '').gsub(/<.*?>/, '') if !branchList[i].to_s.include? "["
+				#orderingHash['branch'] = branchList[i].to_s.gsub(/Squashing /, '').gsub(/<.*?>/, '') if !branchList[i].to_s.include? "["
+                                orderingHash['branch'] = nameList[i].split(' » ')[-1]
 				
 				if statusList[i]=="grey"
 
@@ -134,7 +135,7 @@ require 'jsonpath'
 
 	def GetRunningContainers()
 
-		endpointURL = "http://jenkins.stratio.com:22375/containers/json"
+		endpointURL = "http://niquel.stratio.com:22375/containers/json"
                 jsonPathRegexp = JsonPath.new('$.[*].Names[0]')
 
 		response = jsonPathRegexp.on(HTTParty.get(endpointURL).body)
