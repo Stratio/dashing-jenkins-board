@@ -25,7 +25,7 @@ require 'jsonpath'
 	def GetRunningJobsList(fList)
  
 		jsonPathRegexp = JsonPath.new('..builds[?(@.result==nil || @_current_node["duration"]==0)].fullDisplayName')
-		jobsDisplayNameArray = jsonPathRegexp.on(fList)		
+		jobsDisplayNameArray = jsonPathRegexp.on(fList)
 
 		jsonPathRegexp = JsonPath.new('..builds[?(@.result==nil || @_current_node["duration"]==0)].timestamp')
 		jobsTimestampArray = jsonPathRegexp.on(fList)		
@@ -36,8 +36,6 @@ require 'jsonpath'
 		statusArray.fill("grey")
 		theArray = BuildOrderedJobsArray(jobsDisplayNameArray,jobsTimestampArray, statusArray, nil)		
 		
-		#p theArray
-
 		returnHash = Hash.new
 		returnHash['count'] = ''
 		returnHash['count'] = '+ ' + (theArray.length - 6).to_s if (theArray.length - 6) > 0
@@ -55,6 +53,8 @@ require 'jsonpath'
 			if (nameList[i] != nil)
 				
 				orderingHash['label'] = nameList[i].split(' » ')[-2]
+                                orderingHash['label'] = orderingHash['label'][0, 25] + '...' if orderingHash['label'].size > 26
+
 				orderingHash['posix'] = posixList[i]
 				orderingHash['status'] = statusList[i]
                                 orderingHash['branch'] = nameList[i].split(' » ')[-1]
@@ -87,7 +87,7 @@ require 'jsonpath'
  		
 		statusArray = Array.new
 		jsonPathRegexp = JsonPath.new('..builds[?(@.result=="SUCCESS")].fullDisplayName')
-		jobsDisplayNameArray = jsonPathRegexp.on(fList)		
+		jobsDisplayNameArray = jsonPathRegexp.on(fList)
 
 		firstArrayl = jobsDisplayNameArray.length
 
@@ -100,7 +100,7 @@ require 'jsonpath'
 		statusArray.fill("green", 0..firstArrayl)
 
 		jsonPathRegexp = JsonPath.new('..builds[?(@.result=="FAILURE")].fullDisplayName')
-		jobsDisplayNameArray.concat(jsonPathRegexp.on(fList))		
+		jobsDisplayNameArray.concat(jsonPathRegexp.on(fList))
 
 		jsonPathRegexp = JsonPath.new('..builds[?(@.result=="FAILURE")].duration')
 		jobsDurationArray.concat(jsonPathRegexp.on(fList))
@@ -112,8 +112,6 @@ require 'jsonpath'
 
 		theArray = Array.new	
 		theArray = BuildOrderedJobsArray(jobsDisplayNameArray,jobsTimestampArray, statusArray, jobsDurationArray)
-
-		#puts "Completed: " + jobsDisplayNameArray.length.to_s
 
 		returnHash = Hash.new
                 returnHash['count'] = ''
