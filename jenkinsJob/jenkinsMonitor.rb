@@ -52,7 +52,7 @@ require 'jsonpath'
 
 			if (nameList[i] != nil)
 				
-				orderingHash['label'] = nameList[i].split(' » ')[-2]
+				orderingHash['label'] = nameList[i].split(' » ')[-2].gsub('stratio/', '')
                                 orderingHash['label'] = orderingHash['label'][0, 25] + '...' if orderingHash['label'].size > 26
 
 				orderingHash['posix'] = posixList[i]
@@ -87,7 +87,7 @@ require 'jsonpath'
  		
 		statusArray = Array.new
 		jsonPathRegexp = JsonPath.new('..builds[?(@.result=="SUCCESS")].fullDisplayName')
-		jobsDisplayNameArray = jsonPathRegexp.on(fList)
+		jobsDisplayNameArray = jsonPathRegexp.on(fList).each {|x| x = x.sub('stratio/', '')}
 
 		firstArrayl = jobsDisplayNameArray.length
 
