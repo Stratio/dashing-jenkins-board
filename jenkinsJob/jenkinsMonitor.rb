@@ -7,19 +7,18 @@ require 'jsonpath'
 
 		jobsList = Array.new
 
-		endpointURL = "http://jenkins.stratio.com:8080/api/json?tree=jobs[name,jobs[name,builds[fullDisplayName,result,timestamp,duration],jobs[name,builds[fullDisplayName,result,timestamp,duration]]]]"
+		endpointURL = "http://10.120.0.5:8080/api/json?tree=jobs[name,jobs[name,builds[fullDisplayName,result,timestamp,duration],jobs[name,builds[fullDisplayName,result,timestamp,duration]]]]"
 		return JSON.parse(HTTParty.get(endpointURL).body)		
 
 	end
     
 	def GetRunningWorkers()
-		endpointURL = "http://jenkins.stratio.com:8080/computer/api/json?tree=computer"
+		endpointURL = "http://10.120.0.5:8080/computer/api/json?tree=computer"
 		response = JSON.parse(HTTParty.get(endpointURL).body)
 
 		jsonPathRegexp = JsonPath.new("$.computer[*]._class")
 		response = jsonPathRegexp.on(response)
-		## In order to exclude master slave we remove 1 computer
-		return response.count - 1
+		return response.count
 	end
 
 	def GetRunningJobsList(fList)
@@ -136,13 +135,16 @@ interval = "30s"
 
 SCHEDULER.every interval, :first_in => 0 do 
 
+	jRunningContainers = GetRunningContainers()
+	jCurrentWorkers = GetRunningWorkers()  		
+	
 	fullList = GetFullJobsList()
-    	jCurrentWorkers = GetRunningWorkers()  		
-    	jExecutingJobsList = GetRunningJobsList(fullList)    
-    	jFinishedJobsList = GetCompletedJobsList(fullList)	
-    	jRunningContainers = GetRunningContainers()
+	
+	jExecutingJobsList = GetRunningJobsList(fullList)    
+	jFinishedJobsList = GetCompletedJobsList(fullList)	
 
-	send_event('jenkinsCurrentDockerContainers', { current: (jRunningContainers - 8) })
+
+	send_event('jenkinsCurrentDockerContainers', { current: (jRunningContainers) })
 	send_event('jenkinsCurrentWorkers', { current: jCurrentWorkers })
 
 	send_event('jenkinsCurrentJobsList', { items: jExecutingJobsList['items'], count: jExecutingJobsList['count'] })		
